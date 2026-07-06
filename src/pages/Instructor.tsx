@@ -15,6 +15,7 @@ import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { trackBadge } from '../lib/constants'
 import { STAGES } from '../data/stages'
+import SlideViewerModal from '../components/SlideViewerModal'
 import type { Submission, Signal, Prd } from '../lib/types'
 
 interface Participant {
@@ -35,6 +36,7 @@ export default function Instructor() {
   const [signals, setSignals] = useState<Signal[]>([])
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [trainingEnded, setTrainingEnded] = useState(false)
+  const [previewSub, setPreviewSub] = useState<Submission | null>(null)
 
   useEffect(() => {
     const unsubs = [
@@ -226,17 +228,32 @@ export default function Instructor() {
         )}
         <div className="space-y-3">
           {subs.map((s) => (
-            <SubmissionRow key={s.id} sub={s} prd={prdByUid.get(s.uid)} />
+            <SubmissionRow
+              key={s.id}
+              sub={s}
+              prd={prdByUid.get(s.uid)}
+              onPreviewSlides={() => setPreviewSub(s)}
+            />
           ))}
         </div>
       </section>
+
+      {previewSub && <SlideViewerModal sub={previewSub} onClose={() => setPreviewSub(null)} />}
     </div>
   )
 }
 
 type PanelKind = 'prd' | 'spec' | null
 
-function SubmissionRow({ sub, prd }: { sub: Submission; prd?: Prd }) {
+function SubmissionRow({
+  sub,
+  prd,
+  onPreviewSlides,
+}: {
+  sub: Submission
+  prd?: Prd
+  onPreviewSlides: () => void
+}) {
   const [panel, setPanel] = useState<PanelKind>(null)
 
   return (
@@ -265,11 +282,7 @@ function SubmissionRow({ sub, prd }: { sub: Submission; prd?: Prd }) {
           <PillButton onClick={() => window.open(sub.url, '_blank', 'noreferrer')}>
             🔗 링크
           </PillButton>
-          <PillButton
-            onClick={() => window.open(`/gallery/present?focus=${sub.id}`, '_blank')}
-          >
-            🖼️ 슬라이드
-          </PillButton>
+          <PillButton onClick={onPreviewSlides}>🖼️ 슬라이드</PillButton>
         </div>
       </div>
 
