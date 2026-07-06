@@ -14,7 +14,7 @@ import {
 import { db, auth } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { trackBadge } from '../lib/constants'
-import type { Submission, Comment, Reaction } from '../lib/types'
+import type { Submission, Comment, Reaction, Reflection } from '../lib/types'
 
 const EMOJIS = ['❤️', '👍', '😍']
 
@@ -23,6 +23,7 @@ export default function Gallery() {
   const [subs, setSubs] = useState<Submission[]>([])
   const [reactions, setReactions] = useState<Reaction[]>([])
   const [openId, setOpenId] = useState<string | null>(null)
+  const [trainingEnded, setTrainingEnded] = useState(false)
 
   useEffect(() => {
     const unsub1 = onSnapshot(
@@ -33,9 +34,13 @@ export default function Gallery() {
     const unsub2 = onSnapshot(collection(db, 'reactions'), (snap) =>
       setReactions(snap.docs.map((d) => d.data() as Reaction)),
     )
+    const unsub3 = onSnapshot(doc(db, 'config', 'app'), (snap) => {
+      setTrainingEnded(!!snap.data()?.trainingEnded)
+    })
     return () => {
       unsub1()
       unsub2()
+      unsub3()
     }
   }, [])
 
@@ -131,7 +136,81 @@ export default function Gallery() {
           )
         })}
       </div>
+
+      {trainingEnded && <ReflectionSection />}
     </div>
+  )
+}
+
+function ReflectionSection() {
+  const { session } = useAuth()
+  const [reflections, setReflections] = useState<Reflection[]>([])
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [mySaved, setMySaved] = useState(false)
+
+  useEffect(() => {
+    const unsub = onSnapshot(collection(db, 'reflections'), (snap) => {
+      const all = snap.docs.map((d) => d.data() as Reflection)
+      setReflections(all)
+      const mine = all.find((r) => r.uid === auth.currentUser?.uid)
+      if (mine) {
+        setText(mine.text)
+        setMySaved(true)
+      }
+    })
+    return unsub
+  }, [])
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!text.trim() || !auth.currentUser || !session) return
+    setBusy(true)
+    try {
+      await setDoc(doc(db, 'reflections', auth.currentUser.uid), {
+        uid: auth.currentUser.uid,
+        nickname: session.nickname,
+        subject: session.subject,
+        text: text.trim(),
+        createdAt: serverTimestamp(),
+      })
+      setMySaved(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <section className="mt-10 rounded-2xl border border-cinema-100 bg-white p-6 shadow-sm">
+      <h2 className="font-display text-xl font-bold text-cinema-700">📝 연수 성찰 후기</h2>
+      <p className="mb-4 mt-1 text-gray-600">
+        오늘 연수를 마치며 느낀 점을 자유롭게 남겨 주세요. 모두의 후기를 함께 볼 수 있어요.
+      </p>
+      <form onSubmit={submit} className="mb-6 space-y-2">
+        <textarea
+          className="h-28 w-full rounded-xl border-2 border-gray-200 p-3 focus:border-cinema-500 focus:outline-none"
+          placeholder="오늘 연수에서 느낀 점, 아쉬운 점, 다음에 바라는 점을 자유롭게 적어 주세요."
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+        />
+        <button
+          disabled={busy || !text.trim()}
+          className="rounded-xl bg-cinema-500 px-6 py-2.5 font-bold text-white disabled:opacity-40"
+        >
+          {mySaved ? '수정 저장 💾' : '후기 남기기 ✏️'}
+        </button>
+      </form>
+      <div className="space-y-3">
+        {reflections.map((r) => (
+          <div key={r.uid} className="rounded-xl bg-gray-50 p-3 text-sm">
+            <p className="font-bold text-gray-700">
+              {r.nickname} <span className="font-normal text-gray-400">· {r.subject}</span>
+            </p>
+            <p className="mt-1 whitespace-pre-wrap text-gray-700">{r.text}</p>
+          </div>
+        ))}
+      </div>
+    </section>
   )
 }
 

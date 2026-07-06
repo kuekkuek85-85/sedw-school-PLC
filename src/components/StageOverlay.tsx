@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { doc, onSnapshot, type Timestamp } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { doc, onSnapshot, setDoc, arrayUnion, type Timestamp } from 'firebase/firestore'
+import { db, auth } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { STAGES } from '../data/stages'
 
@@ -51,7 +51,17 @@ export default function StageOverlay() {
           </div>
         )}
         <button
-          onClick={() => setDismissedAt(updatedMs)}
+          onClick={() => {
+            setDismissedAt(updatedMs)
+            // 스테이지를 확인하면 도장판에 도장이 찍힘
+            if (auth.currentUser) {
+              setDoc(
+                doc(db, 'participants', auth.currentUser.uid),
+                { completedStages: arrayUnion(stage.id) },
+                { merge: true },
+              ).catch(() => {})
+            }
+          }}
           className="mt-6 w-full rounded-xl bg-cinema-500 py-4 text-lg font-bold text-white transition hover:bg-cinema-600"
         >
           확인했어요, 진행할게요 ✅

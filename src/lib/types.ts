@@ -14,6 +14,9 @@ export interface Submission {
   toImprove: string
   remixedFrom?: string
   grillDone: boolean
+  specFeedback?: string
+  specFeedbackEditedBy?: 'ai' | 'instructor'
+  specFeedbackUpdatedAt?: Timestamp
   createdAt?: Timestamp
   updatedAt?: Timestamp
 }
@@ -38,4 +41,26 @@ export interface Signal {
   nickname: string
   status: 'green' | 'yellow' | 'red'
   updatedAt?: Timestamp
+}
+
+export interface Prd {
+  uid: string
+  nickname: string
+  subject: string
+  prdText: string
+  questions: string[]
+  grillDone: boolean
+  aiFeedback?: string
+  feedbackEditedBy?: 'ai' | 'instructor'
+  feedbackUpdatedAt?: Timestamp
+  createdAt?: Timestamp
+  updatedAt?: Timestamp
+}
+
+export interface Reflection {
+  uid: string
+  nickname: string
+  subject: string
+  text: string
+  createdAt?: Timestamp
 }

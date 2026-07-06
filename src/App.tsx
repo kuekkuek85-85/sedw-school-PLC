@@ -11,6 +11,7 @@ import Gallery from './pages/Gallery'
 import Present from './pages/Present'
 import Guide from './pages/Guide'
 import Instructor from './pages/Instructor'
+import Certificate from './pages/Certificate'
 
 export default function App() {
   const { session, loading } = useAuth()
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/guide" element={<Guide />} />
           <Route path="/instructor" element={<Instructor />} />
+          <Route path="/certificate" element={<Certificate />} />
         </Route>
       </Routes>
     </>

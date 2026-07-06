@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, useCallback } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState, useCallback, useRef } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore'
 import { QRCodeSVG } from 'qrcode.react'
 import { db } from '../lib/firebase'
@@ -10,6 +10,8 @@ import type { Submission } from '../lib/types'
 export default function Present() {
   const [subs, setSubs] = useState<Submission[]>([])
   const [idx, setIdx] = useState(0)
+  const [searchParams] = useSearchParams()
+  const focusedRef = useRef(false)
 
   useEffect(() => {
     return onSnapshot(
@@ -18,6 +20,18 @@ export default function Present() {
         setSubs(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Submission)),
     )
   }, [])
+
+  // 강사 대시보드에서 특정 제출물 슬라이드로 바로 이동 (?focus=제출물ID)
+  useEffect(() => {
+    if (focusedRef.current || subs.length === 0) return
+    const focusId = searchParams.get('focus')
+    if (!focusId) return
+    const subIdx = subs.findIndex((s) => s.id === focusId)
+    if (subIdx >= 0) {
+      setIdx(subIdx * 4)
+      focusedRef.current = true
+    }
+  }, [subs, searchParams])
 
   const totalSlides = subs.length * 4
 

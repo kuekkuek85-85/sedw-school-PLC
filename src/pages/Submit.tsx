@@ -5,6 +5,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   doc,
@@ -13,6 +14,18 @@ import {
 import { db, auth } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { TRACKS } from '../lib/constants'
+
+const FALLBACK_SPEC_FEEDBACK =
+  '완성도 있는 결과물이네요! 다음 버전에서는 성공/실패 피드백을 더 즉각적이고 긍정적으로 다듬어보면 좋겠어요.'
+
+function buildSpecText(fields: {
+  targetStudents: string
+  features: string[]
+  proudOf: string
+  toImprove: string
+}) {
+  return `대상 학생·수행수준: ${fields.targetStudents}\n핵심 기능: ${fields.features.join(', ')}\n자랑할 점: ${fields.proudOf}\n아쉬운 점·다음 계획: ${fields.toImprove}`
+}
 
 export default function Submit() {
   const { session } = useAuth()
@@ -28,6 +41,8 @@ export default function Submit() {
   const [error, setError] = useState('')
   const [done, setDone] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
 
   useEffect(() => {
     // 기존 제출물 불러오기 (본인 것 수정 가능)
@@ -50,6 +65,7 @@ export default function Submit() {
         setProudOf(s.proudOf ?? '')
         setToImprove(s.toImprove ?? '')
         setRemixed(!!s.remixedFrom)
+        setFeedback(s.specFeedback ?? '')
       }
     }
     load().catch(() => {})
@@ -71,7 +87,9 @@ export default function Submit() {
 
     setBusy(true)
     try {
-      const grillDone = localStorage.getItem('dawon_grill_done') === 'true'
+      const prdSnap = await getDoc(doc(db, 'prds', auth.currentUser.uid)).catch(() => null)
+      const grillDone = !!prdSnap?.exists() && !!prdSnap.data().grillDone
+      const cleanFeatures = features.map((f) => f.trim())
       const data = {
         uid: auth.currentUser.uid,
         nickname: session.nickname,
@@ -80,13 +98,14 @@ export default function Submit() {
         appName: appName.trim(),
         url: url.trim(),
         targetStudents: targetStudents.trim(),
-        features: features.map((f) => f.trim()),
+        features: cleanFeatures,
         proudOf: proudOf.trim(),
         toImprove: toImprove.trim(),
         remixedFrom: remixed ? '강사 v0.1' : '',
         grillDone,
         updatedAt: serverTimestamp(),
       }
+      let subId = existingId
       if (existingId) {
         await updateDoc(doc(db, 'submissions', existingId), data)
       } else {
@@ -94,9 +113,38 @@ export default function Submit() {
           ...data,
           createdAt: serverTimestamp(),
         })
+        subId = ref.id
         setExistingId(ref.id)
       }
       setDone(true)
+
+      // 제출 내용(스펙)에 대한 AI 피드백 생성 — 강사가 대시보드에서 검수·수정 가능
+      setFeedbackLoading(true)
+      const specText = buildSpecText({
+        targetStudents: targetStudents.trim(),
+        features: cleanFeatures,
+        proudOf: proudOf.trim(),
+        toImprove: toImprove.trim(),
+      })
+      fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'spec', text: specText }),
+      })
+        .then((r) => r.json())
+        .then((res) => (typeof res.feedback === 'string' && res.feedback.trim() ? res.feedback : FALLBACK_SPEC_FEEDBACK))
+        .catch(() => FALLBACK_SPEC_FEEDBACK)
+        .then(async (aiFeedback) => {
+          setFeedback(aiFeedback)
+          if (subId) {
+            await updateDoc(doc(db, 'submissions', subId), {
+              specFeedback: aiFeedback,
+              specFeedbackEditedBy: 'ai',
+              specFeedbackUpdatedAt: serverTimestamp(),
+            }).catch(() => {})
+          }
+        })
+        .finally(() => setFeedbackLoading(false))
     } catch {
       setError('저장에 실패했어요. 인터넷 연결을 확인하고 다시 시도해 주세요.')
     } finally {
@@ -114,6 +162,16 @@ export default function Submit() {
         <p className="mt-2 text-gray-600">
           발표 슬라이드가 자동으로 만들어졌어요.
         </p>
+        {(feedbackLoading || feedback) && (
+          <div className="mt-6 rounded-2xl border border-cinema-100 bg-cinema-50 p-5 text-left">
+            <p className="font-bold text-cinema-700">🤖 AI 피드백</p>
+            {feedbackLoading ? (
+              <p className="mt-1 text-gray-500">피드백을 작성하고 있어요…</p>
+            ) : (
+              <p className="mt-1 text-gray-700">{feedback}</p>
+            )}
+          </div>
+        )}
         <div className="mt-6 flex flex-col gap-3">
           <Link
             to="/gallery"

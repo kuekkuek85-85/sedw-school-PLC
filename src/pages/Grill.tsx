@@ -1,5 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'
+import { db, auth } from '../lib/firebase'
+import { useAuth } from '../context/AuthContext'
 
 const FALLBACK_QUESTIONS = [
   '수행수준(가/나/다)별로 활동이 어떻게 달라지나요?',
@@ -9,14 +12,46 @@ const FALLBACK_QUESTIONS = [
   '이 자료는 7/14 영화관람의 어느 단계(사전/당일/사후)에 쓰이나요?',
 ]
 
+const FALLBACK_PRD_FEEDBACK =
+  'PRD를 잘 정리해 주셨어요! 수행수준(가/나/다)별로 활동이 어떻게 달라지는지, 그리고 그림·큰 버튼 같은 접근성 요소를 조금 더 구체적으로 적으면 더 좋아질 거예요.'
+
 export default function Grill() {
+  const { session } = useAuth()
   const [prd, setPrd] = useState('')
   const [questions, setQuestions] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [passed, setPassed] = useState(
-    () => localStorage.getItem('dawon_grill_done') === 'true',
-  )
+  const [passed, setPassed] = useState(false)
+  const [feedback, setFeedback] = useState('')
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
+
+  // 기존에 저장된 PRD 불러오기 (강사가 피드백을 수정하면 실시간 반영)
+  useEffect(() => {
+    if (!auth.currentUser) return
+    return onSnapshot(doc(db, 'prds', auth.currentUser.uid), (snap) => {
+      if (!snap.exists()) return
+      const d = snap.data()
+      setPrd((prev) => prev || d.prdText || '')
+      setQuestions((prev) => (prev.length ? prev : d.questions || []))
+      setPassed(!!d.grillDone)
+      setFeedback(d.aiFeedback || '')
+    })
+  }, [])
+
+  async function savePrd(fields: Record<string, unknown>) {
+    if (!auth.currentUser || !session) return
+    await setDoc(
+      doc(db, 'prds', auth.currentUser.uid),
+      {
+        uid: auth.currentUser.uid,
+        nickname: session.nickname,
+        subject: session.subject,
+        updatedAt: serverTimestamp(),
+        ...fields,
+      },
+      { merge: true },
+    )
+  }
 
   async function grill() {
     if (prd.trim().length < 20) {
@@ -26,6 +61,7 @@ export default function Grill() {
     setError('')
     setLoading(true)
     setQuestions([])
+    let finalQuestions = FALLBACK_QUESTIONS
     try {
       const controller = new AbortController()
       const timer = setTimeout(() => controller.abort(), 10000)
@@ -38,21 +74,48 @@ export default function Grill() {
       clearTimeout(timer)
       const data = await res.json()
       if (Array.isArray(data.questions) && data.questions.length > 0) {
-        setQuestions(data.questions)
-      } else {
-        setQuestions(FALLBACK_QUESTIONS)
+        finalQuestions = data.questions
       }
     } catch {
       // 로컬 개발(서버리스 없음)·네트워크 장애 시 폴백
-      setQuestions(FALLBACK_QUESTIONS)
     } finally {
+      setQuestions(finalQuestions)
       setLoading(false)
     }
+    // PRD는 Grill Me를 돌리는 순간 자동 저장(제출)됨
+    await savePrd({
+      prdText: prd,
+      questions: finalQuestions,
+      grillDone: false,
+      createdAt: serverTimestamp(),
+    }).catch(() => {})
   }
 
-  function markDone() {
-    localStorage.setItem('dawon_grill_done', 'true')
+  async function markDone() {
     setPassed(true)
+    setFeedbackLoading(true)
+    await savePrd({ grillDone: true }).catch(() => {})
+    let aiFeedback = FALLBACK_PRD_FEEDBACK
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'prd', text: prd }),
+      })
+      const data = await res.json()
+      if (typeof data.feedback === 'string' && data.feedback.trim()) {
+        aiFeedback = data.feedback
+      }
+    } catch {
+      // 서버리스 함수 없음(로컬 개발)·네트워크 장애 시 폴백
+    }
+    setFeedback(aiFeedback)
+    setFeedbackLoading(false)
+    await savePrd({
+      aiFeedback,
+      feedbackEditedBy: 'ai',
+      feedbackUpdatedAt: serverTimestamp(),
+    }).catch(() => {})
   }
 
   return (
@@ -108,6 +171,20 @@ export default function Grill() {
               ✅ 질문을 PRD에 반영했습니다 — 통과!
             </button>
           )}
+        </div>
+      )}
+
+      {(feedbackLoading || feedback) && (
+        <div className="mt-6 rounded-2xl border border-cinema-100 bg-cinema-50 p-5">
+          <p className="font-bold text-cinema-700">🤖 AI 피드백</p>
+          {feedbackLoading ? (
+            <p className="mt-1 text-gray-500">피드백을 작성하고 있어요…</p>
+          ) : (
+            <p className="mt-1 text-gray-700">{feedback}</p>
+          )}
+          <p className="mt-2 text-xs text-gray-400">
+            이 피드백은 강사님이 검토 후 수정할 수 있어요.
+          </p>
         </div>
       )}
     </div>

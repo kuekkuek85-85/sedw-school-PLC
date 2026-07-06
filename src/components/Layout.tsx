@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SignalButtons from './SignalButtons'
+import StageRibbon from './StageRibbon'
 
 const NAV = [
   { to: '/', label: '포털', emoji: '🎬' },
@@ -9,6 +10,7 @@ const NAV = [
   { to: '/submit', label: '제출', emoji: '📮' },
   { to: '/gallery', label: '갤러리', emoji: '🖼️' },
   { to: '/guide', label: '가이드', emoji: '📖' },
+  { to: '/certificate', label: '수료증', emoji: '🏅' },
 ]
 
 export default function Layout() {
@@ -16,6 +18,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-cinema-50">
+      <StageRibbon />
       <header className="sticky top-0 z-30 border-b border-cinema-100 bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-2">
           <nav className="flex flex-1 items-center gap-1 overflow-x-auto">
