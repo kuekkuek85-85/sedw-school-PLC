@@ -63,20 +63,20 @@ export default function Guide() {
 
       <Accordion title="2. Codex 설치하기">
         <Step n={1}>ChatGPT 웹(chatgpt.com)에 로그인합니다. <b>유료 플랜(Plus 이상)</b>이 필요해요.</Step>
-        <Step n={2}>좌측 하단 프로필 → 앱 다운로드에서 데스크톱 앱을 설치합니다.</Step>
-        <Step n={3}>앱 안에서 <b>Codex</b>를 받습니다.</Step>
+        <Step n={2}>좌측 하단 프로필 → <b>Codex 받기</b>를 클릭합니다.</Step>
         <p className="mt-2 font-bold">클론코딩 프롬프트 예시:</p>
         <CopyBlock text={`이 HTML 파일과 같은 구조·같은 조작 방식의 앱을 만들어 줘. 주제만 '영화관 매점에서 간식 고르기'로 바꾸고, 나머지 접근성(큰 버튼, 큰 글씨, 한글 UI)은 그대로 유지해 줘. 단일 index.html로.`} />
       </Accordion>
 
       <Accordion title="3. 학습지원 소프트웨어 등록">
-        <p>
-          만든 웹 자료를 학교 태블릿·PC에서 공식적으로 쓰려면 학습지원 소프트웨어(사이트) 등록 절차를 거치는 것이 안전합니다.
-          절차 개요: <b>자료 URL 확인 → 신청서 작성 → 정보부 검토 → 승인·등록</b>.
-        </p>
-        <p className="rounded-xl bg-amber-50 p-4">
-          학교마다 절차가 달라요. <b>우리 학교 정보 담당 선생님께 문의</b>하는 것이 가장 정확합니다.
-        </p>
+        <a
+          href="https://eduzipregistration.vercel.app/"
+          target="_blank"
+          rel="noreferrer"
+          className="font-bold text-cinema-600 underline"
+        >
+          https://eduzipregistration.vercel.app/
+        </a>
       </Accordion>
 
       <Accordion title="4. Sheets에서 Gemini로 표 만들기">
