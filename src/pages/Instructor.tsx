@@ -1,9 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore'
+import {
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  doc,
+  setDoc,
+  serverTimestamp,
+  type Timestamp,
+} from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { trackBadge } from '../lib/constants'
+import { STAGES } from '../data/stages'
 import type { Submission, Signal } from '../lib/types'
 
 interface Participant {
@@ -21,6 +31,7 @@ export default function Instructor() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [subs, setSubs] = useState<Submission[]>([])
   const [signals, setSignals] = useState<Signal[]>([])
+  const [activeStage, setActiveStage] = useState<string | null>(null)
 
   useEffect(() => {
     const unsubs = [
@@ -37,9 +48,21 @@ export default function Instructor() {
       onSnapshot(collection(db, 'signals'), (snap) =>
         setSignals(snap.docs.map((d) => ({ ...d.data() }) as Signal)),
       ),
+      onSnapshot(doc(db, 'config', 'app'), (snap) => {
+        const data = snap.data() as { activeStage?: string | null } | undefined
+        setActiveStage(data?.activeStage ?? null)
+      }),
     ]
     return () => unsubs.forEach((u) => u())
   }, [])
+
+  async function broadcastStage(stageId: string | null) {
+    await setDoc(
+      doc(db, 'config', 'app'),
+      { activeStage: stageId, stageUpdatedAt: serverTimestamp() as Timestamp },
+      { merge: true },
+    )
+  }
 
   if (session?.role !== 'instructor') {
     return (
@@ -69,6 +92,50 @@ export default function Instructor() {
           📽️ 발표 모드 시작
         </Link>
       </div>
+
+      {/* 스테이지 진행 — 누르면 모든 참가자 화면에 전체화면으로 강제 표시됨 */}
+      <section className="rounded-2xl bg-white p-6 shadow-sm">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display text-xl font-bold text-cinema-700">📽️ 스테이지 진행</h2>
+          {activeStage && (
+            <button
+              onClick={() => broadcastStage(null)}
+              className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-bold text-gray-500 hover:border-cinema-200"
+            >
+              화면 해제
+            </button>
+          )}
+        </div>
+        <p className="mb-4 text-sm text-gray-500">
+          버튼을 누르면 참가자 전원의 화면에 설명 슬라이드가 즉시 뜹니다 (강사 화면 제외).
+        </p>
+        <div className="space-y-2">
+          {STAGES.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => broadcastStage(s.id)}
+              className={`flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition ${
+                activeStage === s.id
+                  ? 'border-cinema-500 bg-cinema-50'
+                  : 'border-gray-100 hover:border-cinema-100'
+              }`}
+            >
+              <span className="text-2xl">{s.emoji}</span>
+              <span className="flex-1">
+                <span className="mr-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-500">
+                  {s.session}
+                </span>
+                <span className="font-bold text-gray-800">{s.title}</span>
+              </span>
+              {activeStage === s.id && (
+                <span className="rounded-full bg-cinema-500 px-3 py-1 text-xs font-bold text-white">
+                  방송 중
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </section>
 
       {/* 현황 요약 */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">

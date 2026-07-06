@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import EntryModal from './components/EntryModal'
 import Layout from './components/Layout'
+import StageOverlay from './components/StageOverlay'
 import Portal from './pages/Portal'
 import Missions from './pages/Missions'
 import Grill from './pages/Grill'
@@ -30,17 +31,20 @@ export default function App() {
   }
 
   return (
-    <Routes>
-      <Route path="/gallery/present" element={<Present />} />
-      <Route element={<Layout />}>
-        <Route path="/" element={<Portal />} />
-        <Route path="/missions" element={<Missions />} />
-        <Route path="/grill" element={<Grill />} />
-        <Route path="/submit" element={<Submit />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/guide" element={<Guide />} />
-        <Route path="/instructor" element={<Instructor />} />
-      </Route>
-    </Routes>
+    <>
+      <StageOverlay />
+      <Routes>
+        <Route path="/gallery/present" element={<Present />} />
+        <Route element={<Layout />}>
+          <Route path="/" element={<Portal />} />
+          <Route path="/missions" element={<Missions />} />
+          <Route path="/grill" element={<Grill />} />
+          <Route path="/submit" element={<Submit />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/guide" element={<Guide />} />
+          <Route path="/instructor" element={<Instructor />} />
+        </Route>
+      </Routes>
+    </>
   )
 }
