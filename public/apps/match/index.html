@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>토이스토리 캐릭터·성격 매칭</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(160deg, #eff6ff, #dbeafe); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+  h1 { font-size: clamp(24px, 5vw, 34px); color: #1e3a8a; text-align: center; }
+  .hint { font-size: 20px; color: #3730a3; margin: 10px 0 20px; text-align: center; }
+  .cols { display: flex; gap: 24px; width: 100%; max-width: 720px; justify-content: center; }
+  .col { flex: 1; display: flex; flex-direction: column; gap: 12px; max-width: 340px; }
+  .col h2 { text-align: center; font-size: 20px; color: #1e40af; }
+  .item { background: #fff; border: 4px solid #93c5fd; border-radius: 16px; padding: 16px; font-size: 22px; font-weight: bold; text-align: center; cursor: pointer; min-height: 64px; transition: all 0.15s; user-select: none; }
+  .item.selected { border-color: #2563eb; transform: scale(1.05); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+  .item.matched { border-color: #16a34a; background: #f0fdf4; cursor: default; opacity: 0.85; }
+  .item.wrong { animation: shake 0.4s; border-color: #ef4444; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .feedback { font-size: 24px; font-weight: bold; margin-top: 20px; min-height: 36px; text-align: center; }
+  .celebrate { display: none; position: fixed; inset: 0; background: rgba(30,58,138,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 20px; }
+  .celebrate.show { display: flex; }
+  .celebrate .big { font-size: 90px; animation: pop 0.6s ease; }
+  .celebrate p { color: #fff; font-size: 30px; font-weight: bold; margin-top: 16px; }
+  .celebrate button { margin-top: 28px; padding: 16px 40px; font-size: 22px; font-weight: bold; background: #fff; color: #1e3a8a; border: none; border-radius: 14px; cursor: pointer; min-height: 56px; }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.3)} 100%{transform:scale(1)} }
+</style>
+</head>
+<body>
+<h1>🤠 토이스토리 캐릭터·성격 매칭</h1>
+<p class="hint">캐릭터를 누르고, 어울리는 성격을 눌러 짝을 맞춰요!</p>
+<div class="cols">
+  <div class="col"><h2>캐릭터</h2><div id="chars"></div></div>
+  <div class="col"><h2>성격</h2><div id="traits"></div></div>
+</div>
+<p class="feedback" id="feedback"></p>
+<div class="celebrate" id="celebrate">
+  <div class="big">🎉</div>
+  <p>모든 짝을 찾았어요!<br>캐릭터 박사님이네요! 👏</p>
+  <button onclick="restart()">🔄 다시 하기</button>
+</div>
+<script>
+const PAIRS = [
+  { char: '🤠 우디', trait: '책임감 있는 리더' },
+  { char: '🚀 버즈', trait: '용감한 모험가' },
+  { char: '🥔 포테토헤드', trait: '투덜대지만 정 많은 친구' },
+  { char: '🦖 렉스', trait: '겁이 많지만 착한 공룡' },
+];
+let selChar = null, selTrait = null, matched = 0;
+const charsEl = document.getElementById('chars');
+const traitsEl = document.getElementById('traits');
+const fb = document.getElementById('feedback');
+
+function shuffle(a) { const r=[...a]; for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
+
+function build() {
+  charsEl.innerHTML = ''; traitsEl.innerHTML = '';
+  charsEl.style.display = traitsEl.style.display = 'flex';
+  charsEl.style.flexDirection = traitsEl.style.flexDirection = 'column';
+  charsEl.style.gap = traitsEl.style.gap = '12px';
+  shuffle(PAIRS).forEach((p) => addItem(charsEl, p.char, 'char', p.char));
+  shuffle(PAIRS).forEach((p) => addItem(traitsEl, p.trait, 'trait', p.char));
+}
+
+function addItem(parent, text, kind, key) {
+  const d = document.createElement('div');
+  d.className = 'item'; d.textContent = text; d.dataset.key = key; d.dataset.kind = kind;
+  d.onclick = () => tap(d);
+  parent.appendChild(d);
+}
+
+function tap(el) {
+  if (el.classList.contains('matched')) return;
+  const kind = el.dataset.kind;
+  if (kind === 'char') {
+    document.querySelectorAll('[data-kind=char]').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected'); selChar = el;
+  } else {
+    document.querySelectorAll('[data-kind=trait]').forEach(e=>e.classList.remove('selected'));
+    el.classList.add('selected'); selTrait = el;
+  }
+  if (selChar && selTrait) check();
+}
+
+function check() {
+  if (selChar.dataset.key === selTrait.dataset.key) {
+    selChar.classList.add('matched'); selTrait.classList.add('matched');
+    fb.textContent = '딩동댕! 맞았어요! 🎊'; fb.style.color = '#16a34a';
+    matched++;
+    if (matched === PAIRS.length) setTimeout(()=>document.getElementById('celebrate').classList.add('show'), 500);
+  } else {
+    selChar.classList.add('wrong'); selTrait.classList.add('wrong');
+    fb.textContent = '괜찮아요, 다시 골라 볼까요? 😊'; fb.style.color = '#2563eb';
+    setTimeout(()=>{ document.querySelectorAll('.wrong').forEach(e=>e.classList.remove('wrong')); }, 450);
+  }
+  selChar.classList.remove('selected'); selTrait.classList.remove('selected');
+  selChar = selTrait = null;
+}
+
+function restart() {
+  document.getElementById('celebrate').classList.remove('show');
+  matched = 0; selChar = selTrait = null; fb.textContent = '';
+  build();
+}
+build();
+</script>
+</body>
+</html>

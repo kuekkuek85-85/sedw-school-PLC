@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4컷 순서 맞추기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: linear-gradient(160deg, #fdf6ec, #f9e8cd);
+    min-height: 100vh; padding: 20px;
+    display: flex; flex-direction: column; align-items: center;
+  }
+  h1 { font-size: clamp(24px, 5vw, 36px); color: #5c2a12; text-align: center; }
+  .hint { font-size: 20px; color: #a74a18; margin: 12px 0 20px; text-align: center; }
+  .grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    width: 100%; max-width: 640px;
+  }
+  @media (min-width: 700px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+  .card {
+    background: #fff; border: 4px solid #e0762c; border-radius: 16px;
+    padding: 12px; text-align: center; cursor: pointer;
+    min-height: 56px; transition: transform 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .card.selected { border-color: #2563eb; transform: scale(1.06); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
+  .card.correct { border-color: #16a34a; background: #f0fdf4; }
+  .card img { width: 100%; max-width: 140px; pointer-events: none; }
+  .card .label { font-size: 20px; font-weight: bold; margin-top: 6px; }
+  .slot-num {
+    display: inline-block; background: #9ca3af; color: #fff;
+    width: 32px; height: 32px; line-height: 32px; border-radius: 50%;
+    font-size: 18px; font-weight: bold; margin-bottom: 6px;
+  }
+  .card.correct .slot-num { background: #16a34a; }
+  .check-btn, .retry-btn {
+    margin-top: 24px; padding: 18px 48px; font-size: 24px; font-weight: bold;
+    color: #fff; background: #e0762c; border: none; border-radius: 16px;
+    cursor: pointer; min-height: 56px;
+  }
+  .check-btn:active { background: #c95f1d; }
+  .celebrate {
+    display: none; position: fixed; inset: 0; background: rgba(92,42,18,0.85);
+    flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10; text-align: center; padding: 20px;
+  }
+  .celebrate.show { display: flex; }
+  .celebrate .big { font-size: 90px; animation: pop 0.6s ease; }
+  .celebrate p { color: #fff; font-size: 32px; font-weight: bold; margin-top: 16px; }
+  .celebrate button {
+    margin-top: 28px; padding: 16px 40px; font-size: 22px; font-weight: bold;
+    background: #fff; color: #5c2a12; border: none; border-radius: 14px; cursor: pointer;
+    min-height: 56px;
+  }
+  @keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.3); } 100% { transform: scale(1); } }
+  .encourage {
+    margin-top: 16px; font-size: 22px; color: #2563eb; font-weight: bold;
+    min-height: 32px; text-align: center;
+  }
+</style>
+</head>
+<body>
+<h1>🧩 4컷 순서 맞추기</h1>
+<p class="hint">그림 두 개를 차례로 누르면 자리가 바뀌어요.<br>영화관 이용 순서대로 맞춰 보세요!</p>
+<div class="grid" id="grid"></div>
+<p class="encourage" id="encourage"></p>
+<button class="check-btn" id="checkBtn">✅ 다 맞췄어요!</button>
+
+<div class="celebrate" id="celebrate">
+  <div class="big">🎉</div>
+  <p>와! 순서를 모두 맞췄어요!<br>정말 잘했어요! 👏👏👏</p>
+  <button onclick="restart()">🔄 다시 하기</button>
+</div>
+
+<script>
+// 이미지 교체 가능 구조: ?img1=URL&img2=URL&img3=URL&img4=URL
+// (여러분이 만든 4컷 만화 이미지 주소를 넣으면 나만의 수업 앱이 됩니다)
+const params = new URLSearchParams(location.search);
+const DEFAULT_PANELS = [
+  { img: '../comic-4cut/seed-character.svg', label: '🎟️ 표를 사요' },
+  { img: '../comic-4cut/seed-character.svg', label: '🍿 간식을 골라요' },
+  { img: '../comic-4cut/seed-character.svg', label: '💺 조용히 앉아요' },
+  { img: '../comic-4cut/seed-character.svg', label: '😊 영화를 봐요' },
+];
+const panels = DEFAULT_PANELS.map((p, i) => ({
+  ...p,
+  img: params.get('img' + (i + 1)) || p.img,
+  order: i,
+}));
+
+let arrangement = shuffle([0, 1, 2, 3]);
+// 처음부터 정답이면 다시 섞기
+while (arrangement.every((v, i) => v === i)) arrangement = shuffle(arrangement);
+let selected = null;
+
+function shuffle(a) {
+  const arr = [...a];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function render() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  arrangement.forEach((panelIdx, slot) => {
+    const p = panels[panelIdx];
+    const div = document.createElement('div');
+    div.className = 'card' + (selected === slot ? ' selected' : '');
+    div.innerHTML =
+      '<span class="slot-num">' + (slot + 1) + '</span>' +
+      '<img src="' + p.img + '" alt="' + p.label + '">' +
+      '<div class="label">' + p.label + '</div>';
+    div.onclick = () => tap(slot);
+    grid.appendChild(div);
+  });
+}
+
+function tap(slot) {
+  const enc = document.getElementById('encourage');
+  if (selected === null) {
+    selected = slot;
+    enc.textContent = '바꿀 자리를 하나 더 눌러 주세요!';
+  } else if (selected === slot) {
+    selected = null;
+    enc.textContent = '';
+  } else {
+    [arrangement[selected], arrangement[slot]] = [arrangement[slot], arrangement[selected]];
+    selected = null;
+    enc.textContent = '';
+  }
+  render();
+}
+
+document.getElementById('checkBtn').onclick = () => {
+  const correct = arrangement.every((v, i) => v === i);
+  if (correct) {
+    document.querySelectorAll('.card').forEach((c) => c.classList.add('correct'));
+    setTimeout(() => document.getElementById('celebrate').classList.add('show'), 400);
+  } else {
+    document.getElementById('encourage').textContent = '조금만 더! 순서를 다시 살펴볼까요? 😊';
+  }
+};
+
+function restart() {
+  document.getElementById('celebrate').classList.remove('show');
+  arrangement = shuffle([0, 1, 2, 3]);
+  while (arrangement.every((v, i) => v === i)) arrangement = shuffle(arrangement);
+  selected = null;
+  document.getElementById('encourage').textContent = '';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>

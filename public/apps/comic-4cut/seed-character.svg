@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 240" width="200" height="240">
+  <!-- 다원이 — 공통 시드 캐릭터 (중성 마스코트) -->
+  <circle cx="100" cy="80" r="55" fill="#FFD79A"/>
+  <circle cx="80" cy="72" r="8" fill="#3D2B1F"/>
+  <circle cx="120" cy="72" r="8" fill="#3D2B1F"/>
+  <circle cx="83" cy="69" r="2.5" fill="#fff"/>
+  <circle cx="123" cy="69" r="2.5" fill="#fff"/>
+  <path d="M82 98 Q100 115 118 98" stroke="#3D2B1F" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <circle cx="68" cy="90" r="8" fill="#FFB0A0" opacity="0.6"/>
+  <circle cx="132" cy="90" r="8" fill="#FFB0A0" opacity="0.6"/>
+  <path d="M60 45 Q70 20 95 28" stroke="#E0762C" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M105 28 Q130 20 140 45" stroke="#E0762C" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <rect x="70" y="135" width="60" height="70" rx="20" fill="#E0762C"/>
+  <rect x="85" y="150" width="30" height="25" rx="6" fill="#fff"/>
+  <text x="100" y="169" text-anchor="middle" font-size="16">🎬</text>
+  <rect x="45" y="140" width="28" height="14" rx="7" fill="#FFD79A" transform="rotate(30 59 147)"/>
+  <rect x="127" y="140" width="28" height="14" rx="7" fill="#FFD79A" transform="rotate(-30 141 147)"/>
+  <rect x="80" y="203" width="14" height="24" rx="7" fill="#C95F1D"/>
+  <rect x="106" y="203" width="14" height="24" rx="7" fill="#C95F1D"/>
+</svg>

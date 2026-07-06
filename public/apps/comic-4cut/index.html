@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영화관 이용 순서 4컷 만화 활동지</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: #fdf6ec;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  .sheet {
+    background: #fff;
+    max-width: 760px;
+    width: 100%;
+    padding: 36px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  h1 { font-size: 28px; text-align: center; color: #5c2a12; }
+  .name-row {
+    display: flex; gap: 24px; margin: 20px 0;
+    font-size: 20px; font-weight: bold;
+  }
+  .name-row span { border-bottom: 2px solid #333; flex: 1; padding-bottom: 4px; }
+  .grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  .panel {
+    border: 3px solid #e0762c; border-radius: 12px;
+    padding: 12px; text-align: center;
+  }
+  .panel .num {
+    display: inline-block; background: #e0762c; color: #fff;
+    width: 36px; height: 36px; line-height: 36px; border-radius: 50%;
+    font-size: 20px; font-weight: bold; margin-bottom: 8px;
+  }
+  .panel img { width: 100%; max-width: 200px; }
+  .panel .caption {
+    font-size: 22px; font-weight: bold; margin-top: 8px; color: #333;
+  }
+  .panel .bubble {
+    background: #fdf6ec; border-radius: 20px; padding: 8px 12px;
+    font-size: 20px; margin-top: 6px;
+  }
+  .task {
+    margin-top: 28px; font-size: 20px; line-height: 1.8;
+  }
+  .task .line { border-bottom: 2px dotted #999; display: inline-block; min-width: 180px; }
+  .print-btn {
+    display: block; margin: 28px auto 0; padding: 16px 40px;
+    font-size: 22px; font-weight: bold; color: #fff;
+    background: #e0762c; border: none; border-radius: 14px; cursor: pointer;
+    min-height: 56px;
+  }
+  .print-btn:active { background: #c95f1d; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .sheet { box-shadow: none; padding: 10mm; max-width: none; border-radius: 0; }
+    .print-btn { display: none; }
+    @page { size: A4; margin: 10mm; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <h1>🎬 영화관 이용 순서 4컷 만화</h1>
+  <div class="name-row">
+    <span>이름:</span>
+    <span>날짜:</span>
+  </div>
+  <div class="grid">
+    <div class="panel">
+      <span class="num">1</span>
+      <img src="seed-character.svg" alt="다원이가 표를 사요">
+      <div class="caption">🎟️ 표를 사요</div>
+      <div class="bubble">"표를 살 거예요"</div>
+    </div>
+    <div class="panel">
+      <span class="num">2</span>
+      <img src="seed-character.svg" alt="다원이가 간식을 골라요">
+      <div class="caption">🍿 간식을 골라요</div>
+      <div class="bubble">"간식을 골라요"</div>
+    </div>
+    <div class="panel">
+      <span class="num">3</span>
+      <img src="seed-character.svg" alt="다원이가 자리에 앉아요">
+      <div class="caption">💺 조용히 앉아요</div>
+      <div class="bubble">"조용히 앉아요"</div>
+    </div>
+    <div class="panel">
+      <span class="num">4</span>
+      <img src="seed-character.svg" alt="다원이가 영화를 봐요">
+      <div class="caption">😊 영화를 봐요</div>
+      <div class="bubble">"영화가 재미있어요"</div>
+    </div>
+  </div>
+  <div class="task">
+    ✏️ 영화관에 가면 <b>가장 먼저</b> 무엇을 하나요? <span class="line"></span><br>
+    ✏️ 영화를 볼 때 지켜야 할 약속을 하나 써 보세요. <span class="line"></span>
+  </div>
+  <button class="print-btn" onclick="window.print()">🖨️ 인쇄하기</button>
+</div>
+</body>
+</html>

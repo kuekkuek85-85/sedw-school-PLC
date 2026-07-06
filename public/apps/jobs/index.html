@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>영화관 직업 맞추기 퀴즈</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: 'Noto Sans KR', sans-serif; background: linear-gradient(160deg, #fef3c7, #fde68a); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+  h1 { font-size: clamp(24px, 5vw, 34px); color: #78350f; text-align: center; }
+  .progress { font-size: 20px; color: #92400e; margin: 10px 0 16px; font-weight: bold; }
+  .quiz { background: #fff; border-radius: 20px; padding: 28px; max-width: 560px; width: 100%; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+  .emoji { font-size: 80px; }
+  .question { font-size: 24px; font-weight: bold; margin: 16px 0 24px; line-height: 1.5; }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  .opt { padding: 18px; font-size: 22px; font-weight: bold; background: #fef3c7; border: 4px solid #fbbf24; border-radius: 16px; cursor: pointer; min-height: 56px; transition: all 0.15s; }
+  .opt:active { transform: scale(0.98); }
+  .opt.correct { background: #f0fdf4; border-color: #16a34a; }
+  .opt.wrong { background: #fef2f2; border-color: #ef4444; animation: shake 0.4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  .feedback { font-size: 24px; font-weight: bold; margin-top: 18px; min-height: 36px; }
+  .next-btn { display: none; margin-top: 16px; padding: 16px 40px; font-size: 22px; font-weight: bold; color: #fff; background: #f59e0b; border: none; border-radius: 14px; cursor: pointer; min-height: 56px; }
+  .celebrate { display: none; position: fixed; inset: 0; background: rgba(120,53,15,0.9); flex-direction: column; align-items: center; justify-content: center; z-index: 10; text-align: center; padding: 20px; }
+  .celebrate.show { display: flex; }
+  .celebrate .big { font-size: 90px; animation: pop 0.6s ease; }
+  .celebrate p { color: #fff; font-size: 30px; font-weight: bold; margin-top: 16px; }
+  .celebrate button { margin-top: 28px; padding: 16px 40px; font-size: 22px; font-weight: bold; background: #fff; color: #78350f; border: none; border-radius: 14px; cursor: pointer; min-height: 56px; }
+  @keyframes pop { 0%{transform:scale(0)} 70%{transform:scale(1.3)} 100%{transform:scale(1)} }
+</style>
+</head>
+<body>
+<h1>🎬 영화관 직업 맞추기 퀴즈</h1>
+<p class="progress" id="progress"></p>
+<div class="quiz">
+  <div class="emoji" id="emoji"></div>
+  <p class="question" id="question"></p>
+  <div class="options" id="options"></div>
+  <p class="feedback" id="feedback"></p>
+  <button class="next-btn" id="nextBtn">다음 문제 →</button>
+</div>
+<div class="celebrate" id="celebrate">
+  <div class="big">🏆</div>
+  <p id="finalMsg"></p>
+  <button onclick="restart()">🔄 다시 하기</button>
+</div>
+<script>
+const QUIZ = [
+  { emoji: '🎟️', q: '영화표를 확인하고 상영관을 안내해 주는 사람은?', options: ['검표원', '요리사', '운전기사'], answer: 0 },
+  { emoji: '🍿', q: '팝콘과 음료를 만들어 파는 사람은?', options: ['매점 직원', '의사', '소방관'], answer: 0 },
+  { emoji: '📽️', q: '영화가 잘 나오도록 기계를 관리하는 사람은?', options: ['영사 기사', '농부', '미용사'], answer: 0 },
+  { emoji: '🧹', q: '상영관을 깨끗하게 청소해 주시는 분은?', options: ['미화원', '가수', '경찰관'], answer: 0 },
+  { emoji: '🎬', q: '영화를 만들 때 "레디, 액션!"을 외치는 사람은?', options: ['감독', '집배원', '치과의사'], answer: 0 },
+];
+let idx = 0, score = 0, answered = false;
+const els = {
+  emoji: document.getElementById('emoji'),
+  q: document.getElementById('question'),
+  opts: document.getElementById('options'),
+  fb: document.getElementById('feedback'),
+  next: document.getElementById('nextBtn'),
+  prog: document.getElementById('progress'),
+};
+
+function shuffle(a) { const r=[...a]; for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]];} return r; }
+
+function show() {
+  answered = false;
+  const item = QUIZ[idx];
+  els.prog.textContent = (idx + 1) + ' / ' + QUIZ.length + ' 문제';
+  els.emoji.textContent = item.emoji;
+  els.q.textContent = item.q;
+  els.fb.textContent = '';
+  els.next.style.display = 'none';
+  els.opts.innerHTML = '';
+  const shuffled = shuffle(item.options.map((t, i) => ({ t, correct: i === item.answer })));
+  shuffled.forEach((o) => {
+    const b = document.createElement('button');
+    b.className = 'opt'; b.textContent = o.t;
+    b.onclick = () => pick(b, o.correct);
+    els.opts.appendChild(b);
+  });
+}
+
+function pick(btn, correct) {
+  if (answered) return;
+  if (correct) {
+    answered = true;
+    btn.classList.add('correct');
+    els.fb.textContent = '딩동댕! 정답이에요! 🎊';
+    els.fb.style.color = '#16a34a';
+    score++;
+    els.next.style.display = 'inline-block';
+  } else {
+    btn.classList.add('wrong');
+    els.fb.textContent = '다시 한번 생각해 볼까요? 😊';
+    els.fb.style.color = '#d97706';
+    setTimeout(() => btn.classList.remove('wrong'), 450);
+  }
+}
+
+els.next.onclick = () => {
+  idx++;
+  if (idx >= QUIZ.length) {
+    document.getElementById('finalMsg').innerHTML = '퀴즈 끝!<br>' + QUIZ.length + '문제 모두 풀었어요! 👏';
+    document.getElementById('celebrate').classList.add('show');
+  } else {
+    show();
+  }
+};
+
+function restart() {
+  document.getElementById('celebrate').classList.remove('show');
+  idx = 0; score = 0;
+  show();
+}
+show();
+</script>
+</body>
+</html>

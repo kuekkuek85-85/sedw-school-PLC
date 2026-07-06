@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // 참가자: 본인 문서만 쓰기
+    match /participants/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 포털 카드: 읽기는 전체, 쓰기는 강사만
+    match /portal_items/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && get(/databases/$(database)/documents/participants/$(request.auth.uid)).data.role == 'instructor';
+    }
+
+    // 제출물: 본인 것만 생성·수정·삭제
+    match /submissions/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+
+      // 댓글: 본인 것만 수정·삭제
+      match /comments/{cid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+      }
+    }
+
+    // 이모지 반응: 문서 ID가 {submissionId}_{uid} — 본인 uid로 끝나는 것만
+    match /reactions/{rid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && rid.matches('.*_' + request.auth.uid + '$')
+        && (request.resource == null || request.resource.data.uid == request.auth.uid);
+    }
+
+    // 신호등: 본인 문서만
+    match /signals/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 설정: 읽기 전체, 쓰기 강사만
+    match /config/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+        && get(/databases/$(database)/documents/participants/$(request.auth.uid)).data.role == 'instructor';
+    }
+  }
+}
