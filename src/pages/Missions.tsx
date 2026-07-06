@@ -81,8 +81,8 @@ export default function Missions() {
           완성된 만화는 그룹 채팅방에 공유! (말풍선 문구를 정확히 지정하면 재생성이 줄어요)
         </p>
         <a
-          href="/apps/comic-4cut/seed-character.svg"
-          download="시드캐릭터.svg"
+          href="/apps/comic-4cut/seed-character.png"
+          download="시드캐릭터.png"
           className="mb-3 inline-block rounded-xl bg-emerald-600 px-4 py-2 font-bold text-white transition hover:bg-emerald-700"
         >
           ⬇️ 공통 시드 이미지 다운로드
