@@ -12,7 +12,8 @@
   .cols { display: flex; gap: 24px; width: 100%; max-width: 720px; justify-content: center; }
   .col { flex: 1; display: flex; flex-direction: column; gap: 12px; max-width: 340px; }
   .col h2 { text-align: center; font-size: 20px; color: #1e40af; }
-  .item { background: #fff; border: 4px solid #93c5fd; border-radius: 16px; padding: 16px; font-size: 22px; font-weight: bold; text-align: center; cursor: pointer; min-height: 64px; transition: all 0.15s; user-select: none; }
+  .item { background: #fff; border: 4px solid #93c5fd; border-radius: 16px; padding: 16px; font-size: 22px; font-weight: bold; text-align: center; cursor: pointer; min-height: 64px; transition: all 0.15s; user-select: none; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .item img { width: 100%; max-width: 140px; pointer-events: none; }
   .item.selected { border-color: #2563eb; transform: scale(1.05); box-shadow: 0 6px 16px rgba(37,99,235,0.3); }
   .item.matched { border-color: #16a34a; background: #f0fdf4; cursor: default; opacity: 0.85; }
   .item.wrong { animation: shake 0.4s; border-color: #ef4444; }
@@ -41,10 +42,10 @@
 </div>
 <script>
 const PAIRS = [
-  { char: '🤠 우디', trait: '책임감 있는 리더' },
-  { char: '🚀 버즈', trait: '용감한 모험가' },
-  { char: '🥔 포테토헤드', trait: '투덜대지만 정 많은 친구' },
-  { char: '🦖 렉스', trait: '겁이 많지만 착한 공룡' },
+  { char: '공룡 친구', img: 'toy-dino.png', trait: '겁이 많지만 착한 공룡' },
+  { char: '카우보이 인형', img: 'toy-cowboy.png', trait: '책임감 있는 리더' },
+  { char: '감자 아저씨', img: 'toy-potato.png', trait: '투덜대지만 정 많은 친구' },
+  { char: '우주 대원', img: 'toy-ranger.png', trait: '용감한 모험가' },
 ];
 let selChar = null, selTrait = null, matched = 0;
 const charsEl = document.getElementById('chars');
@@ -58,13 +59,21 @@ function build() {
   charsEl.style.display = traitsEl.style.display = 'flex';
   charsEl.style.flexDirection = traitsEl.style.flexDirection = 'column';
   charsEl.style.gap = traitsEl.style.gap = '12px';
-  shuffle(PAIRS).forEach((p) => addItem(charsEl, p.char, 'char', p.char));
+  shuffle(PAIRS).forEach((p) => addItem(charsEl, p.char, 'char', p.char, p.img));
   shuffle(PAIRS).forEach((p) => addItem(traitsEl, p.trait, 'trait', p.char));
 }
 
-function addItem(parent, text, kind, key) {
+function addItem(parent, text, kind, key, img) {
   const d = document.createElement('div');
-  d.className = 'item'; d.textContent = text; d.dataset.key = key; d.dataset.kind = kind;
+  d.className = 'item'; d.dataset.key = key; d.dataset.kind = kind;
+  if (img) {
+    const image = document.createElement('img');
+    image.src = img; image.alt = text;
+    d.appendChild(image);
+  }
+  const label = document.createElement('span');
+  label.textContent = text;
+  d.appendChild(label);
   d.onclick = () => tap(d);
   parent.appendChild(d);
 }
