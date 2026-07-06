@@ -40,14 +40,24 @@ export default function Portal() {
           <br />
           오늘 연수에서 여러분의 자료가 이곳에 추가됩니다!
         </p>
-        <a
-          href={CHATGPT_GROUP_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 inline-block rounded-xl bg-white px-5 py-3 font-bold text-cinema-700 shadow transition hover:scale-105"
-        >
-          💬 ChatGPT 그룹 채팅방 입장 (4컷 만화 공유)
-        </a>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <a
+            href={CHATGPT_GROUP_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block rounded-xl bg-white px-5 py-3 font-bold text-cinema-700 shadow transition hover:scale-105"
+          >
+            💬 ChatGPT 그룹 채팅방 입장 (4컷 만화 공유)
+          </a>
+          <a
+            href="https://padlet.com/jjudy7428/26-7-6-15-tutpgslnhc40utq3"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block rounded-xl border border-white/50 px-5 py-3 font-bold text-white transition hover:bg-white/10"
+          >
+            📌 기존 공동교육과정 패들렛 (참고)
+          </a>
+        </div>
       </div>
 
       <div className="mb-6 flex flex-wrap gap-2">
