@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext'
 import EntryModal from './components/EntryModal'
 import Layout from './components/Layout'
 import StageOverlay from './components/StageOverlay'
+import SlidePreviewOverlay from './components/SlidePreviewOverlay'
 import Portal from './pages/Portal'
 import Missions from './pages/Missions'
 import Grill from './pages/Grill'
@@ -34,6 +35,7 @@ export default function App() {
   return (
     <>
       <StageOverlay />
+      <SlidePreviewOverlay />
       <Routes>
         <Route path="/gallery/present" element={<Present />} />
         <Route element={<Layout />}>
