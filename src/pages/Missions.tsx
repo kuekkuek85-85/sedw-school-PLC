@@ -71,6 +71,32 @@ export default function Missions() {
         </p>
       </div>
 
+      {/* 1차시: 4컷 만화 */}
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
+        <h2 className="font-display text-xl font-bold text-emerald-800">
+          🎨 1차시 실습 · 자립 4컷 만화 만들기
+        </h2>
+        <p className="mb-3 mt-1 text-gray-600">
+          공통 시드 이미지를 다운로드해 ChatGPT에 첨부한 뒤, 아래 프롬프트를 붙여넣으세요.
+          완성된 만화는 그룹 채팅방에 공유! (말풍선 문구를 정확히 지정하면 재생성이 줄어요)
+        </p>
+        <a
+          href="/apps/comic-4cut/seed-character.svg"
+          download="시드캐릭터.svg"
+          className="mb-3 inline-block rounded-xl bg-emerald-600 px-4 py-2 font-bold text-white transition hover:bg-emerald-700"
+        >
+          ⬇️ 공통 시드 이미지 다운로드
+        </a>
+        <CopyBlock text={COMIC_TEMPLATE} label="만화 프롬프트 복사" />
+        <p className="mt-3 text-sm text-emerald-800">
+          💡 완성한 만화가{' '}
+          <a href="/apps/sequence/" target="_blank" rel="noreferrer" className="font-bold underline">
+            4컷 순서 맞추기 앱
+          </a>
+          의 재료가 됩니다 — 여러분이 만든 만화가 수업 앱이 돼요!
+        </p>
+      </section>
+
       {/* 1단계: PRD-lite */}
       <section className="rounded-2xl border border-cinema-100 bg-white p-6 shadow-sm">
         <h2 className="font-display text-xl font-bold text-cinema-700">
@@ -112,32 +138,6 @@ export default function Missions() {
         </div>
         <p className="my-4 text-gray-600">{active.desc}</p>
         <CopyBlock text={active.template} label="프롬프트 복사" />
-      </section>
-
-      {/* 1차시: 4컷 만화 */}
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6">
-        <h2 className="font-display text-xl font-bold text-emerald-800">
-          🎨 1차시 실습 · 자립 4컷 만화 만들기
-        </h2>
-        <p className="mb-3 mt-1 text-gray-600">
-          공통 시드 이미지를 다운로드해 ChatGPT에 첨부한 뒤, 아래 프롬프트를 붙여넣으세요.
-          완성된 만화는 그룹 채팅방에 공유! (말풍선 문구를 정확히 지정하면 재생성이 줄어요)
-        </p>
-        <a
-          href="/apps/comic-4cut/seed-character.svg"
-          download="시드캐릭터.svg"
-          className="mb-3 inline-block rounded-xl bg-emerald-600 px-4 py-2 font-bold text-white transition hover:bg-emerald-700"
-        >
-          ⬇️ 공통 시드 이미지 다운로드
-        </a>
-        <CopyBlock text={COMIC_TEMPLATE} label="만화 프롬프트 복사" />
-        <p className="mt-3 text-sm text-emerald-800">
-          💡 완성한 만화가{' '}
-          <a href="/apps/sequence/" target="_blank" rel="noreferrer" className="font-bold underline">
-            4컷 순서 맞추기 앱
-          </a>
-          의 재료가 됩니다 — 여러분이 만든 만화가 수업 앱이 돼요!
-        </p>
       </section>
     </div>
   )
