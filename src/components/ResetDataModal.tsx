@@ -6,10 +6,12 @@ import {
   writeBatch,
   setDoc,
 } from 'firebase/firestore'
-import { db } from '../lib/firebase'
+import { db, auth } from '../lib/firebase'
 
 const CONFIRM_PHRASE = '초기화'
-const COLLECTIONS_TO_WIPE = ['participants', 'submissions', 'prds', 'signals', 'reflections', 'reactions']
+// participants는 반드시 마지막에 지운다 — 강사 본인의 참가자 문서를 먼저 지우면
+// 이후 삭제 작업의 isInstructor() 권한 검사가 실패하게 된다.
+const COLLECTIONS_TO_WIPE = ['submissions', 'prds', 'signals', 'reflections', 'reactions', 'participants']
 
 type Status = 'idle' | 'running' | 'done' | 'error'
 
@@ -39,9 +41,13 @@ export default function ResetDataModal({ onClose }: { onClose: () => void }) {
       }
       setLog((l) => [...l, `💬 댓글 ${commentCount}건 삭제`])
 
+      const myUid = auth.currentUser?.uid
+
       for (const name of COLLECTIONS_TO_WIPE) {
         const snap = await getDocs(collection(db, name))
-        const docsList = snap.docs
+        // 강사 본인의 참가자 문서는 남겨둔다 — 지우면 이후 isInstructor() 검사가 깨짐
+        const docsList =
+          name === 'participants' ? snap.docs.filter((d) => d.id !== myUid) : snap.docs
         for (let i = 0; i < docsList.length; i += 450) {
           const chunk = docsList.slice(i, i + 450)
           const batch = writeBatch(db)
