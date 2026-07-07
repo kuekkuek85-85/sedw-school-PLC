@@ -14,8 +14,9 @@ import {
 import { db } from '../lib/firebase'
 import { useAuth } from '../context/AuthContext'
 import { trackBadge } from '../lib/constants'
-import { STAGES } from '../data/stages'
+import { SESSIONS, stagesBySession, type SessionName } from '../data/stages'
 import SlideViewerModal from '../components/SlideViewerModal'
+import StageDeckModal from '../components/StageDeckModal'
 import type { Submission, Signal, Prd } from '../lib/types'
 
 interface Participant {
@@ -37,6 +38,7 @@ export default function Instructor() {
   const [activeStage, setActiveStage] = useState<string | null>(null)
   const [trainingEnded, setTrainingEnded] = useState(false)
   const [previewSub, setPreviewSub] = useState<Submission | null>(null)
+  const [deckSession, setDeckSession] = useState<SessionName | null>(null)
 
   useEffect(() => {
     const unsubs = [
@@ -128,7 +130,7 @@ export default function Instructor() {
         </div>
       </div>
 
-      {/* 스테이지 진행 — 누르면 모든 참가자 화면에 전체화면으로 강제 표시됨 */}
+      {/* 스테이지 진행 — 차시별 슬라이드 묶음, 열면 강사 화면도 전체화면·참가자 화면도 강제 동기화 */}
       <section className="rounded-2xl bg-white p-6 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-display text-xl font-bold text-cinema-700">📽️ 스테이지 진행</h2>
@@ -142,33 +144,40 @@ export default function Instructor() {
           )}
         </div>
         <p className="mb-4 text-sm text-gray-500">
-          버튼을 누르면 참가자 전원의 화면에 설명 슬라이드가 즉시 뜹니다 (강사 화면 제외).
+          차시를 열면 전체화면 슬라이드 묶음이 뜹니다. 이전·다음으로 넘길 때마다 참가자 전원의
+          화면에도 동일한 단계가 실시간으로 강제 표시됩니다.
         </p>
-        <div className="space-y-2">
-          {STAGES.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => broadcastStage(s.id)}
-              className={`flex w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition ${
-                activeStage === s.id
-                  ? 'border-cinema-500 bg-cinema-50'
-                  : 'border-gray-100 hover:border-cinema-100'
-              }`}
-            >
-              <span className="text-2xl">{s.emoji}</span>
-              <span className="flex-1">
-                <span className="mr-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-bold text-gray-500">
-                  {s.session}
-                </span>
-                <span className="font-bold text-gray-800">{s.title}</span>
-              </span>
-              {activeStage === s.id && (
-                <span className="rounded-full bg-cinema-500 px-3 py-1 text-xs font-bold text-white">
-                  방송 중
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {SESSIONS.map((sessionName) => {
+            const sessionStages = stagesBySession(sessionName)
+            const activeIdx = sessionStages.findIndex((s) => s.id === activeStage)
+            return (
+              <button
+                key={sessionName}
+                onClick={() => setDeckSession(sessionName)}
+                className={`rounded-2xl border-2 p-5 text-left transition ${
+                  activeIdx >= 0
+                    ? 'border-cinema-500 bg-cinema-50'
+                    : 'border-gray-100 hover:border-cinema-100'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-lg font-bold text-gray-800">
+                    {sessionName} 슬라이드 ({sessionStages.length}장)
+                  </span>
+                  {activeIdx >= 0 && (
+                    <span className="rounded-full bg-cinema-500 px-3 py-1 text-xs font-bold text-white">
+                      방송 중 {activeIdx + 1}/{sessionStages.length}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  {sessionStages.map((s) => s.emoji).join(' ')} · {sessionStages[0].title} 외{' '}
+                  {sessionStages.length - 1}장
+                </p>
+              </button>
+            )
+          })}
         </div>
       </section>
 
@@ -239,6 +248,9 @@ export default function Instructor() {
       </section>
 
       {previewSub && <SlideViewerModal sub={previewSub} onClose={() => setPreviewSub(null)} />}
+      {deckSession && (
+        <StageDeckModal session={deckSession} onClose={() => setDeckSession(null)} />
+      )}
     </div>
   )
 }
