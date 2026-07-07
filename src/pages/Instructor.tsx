@@ -103,6 +103,8 @@ export default function Instructor() {
     (a, b) => SIGNAL_ORDER[a.status] - SIGNAL_ORDER[b.status],
   )
   const prdByUid = new Map(prds.map((p) => [p.uid, p]))
+  // 아직 제출은 안 했지만 PRD를 저장·검증한 참가자 (제출 현황에는 안 잡히는 사람들)
+  const prdOnlyList = prds.filter((p) => !submittedUids.has(p.uid))
 
   return (
     <div className="space-y-8">
@@ -226,6 +228,21 @@ export default function Instructor() {
           </div>
         )}
       </section>
+
+      {/* PRD 현황 — 아직 제출은 안 했지만 Grill Me에서 PRD를 저장한 참가자 */}
+      {prdOnlyList.length > 0 && (
+        <section className="rounded-2xl bg-white p-6 shadow-sm">
+          <h2 className="mb-1 font-display text-xl font-bold text-cinema-700">📋 PRD 현황</h2>
+          <p className="mb-4 text-sm text-gray-500">
+            아직 최종 제출 전, PRD만 저장했거나 Grill Me를 진행 중인 참가자입니다.
+          </p>
+          <div className="space-y-3">
+            {prdOnlyList.map((p) => (
+              <PrdOnlyRow key={p.uid} prd={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 제출 현황 — PRD / 스펙 / 링크 / 슬라이드 4갈래 */}
       <section className="rounded-2xl bg-white p-6 shadow-sm">
@@ -357,6 +374,55 @@ function SubmissionRow({
                 specFeedback: text,
                 specFeedbackEditedBy: 'instructor',
                 specFeedbackUpdatedAt: serverTimestamp(),
+              })
+            }}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function PrdOnlyRow({ prd }: { prd: Prd }) {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div className="rounded-xl border border-gray-100">
+      <div className="flex flex-wrap items-center gap-2 p-3">
+        <span className="font-bold">{prd.nickname}</span>
+        <span className="rounded-full bg-cinema-50 px-2 py-0.5 text-sm text-cinema-700">
+          {prd.subject}
+        </span>
+        <span className="flex-1 text-sm text-gray-400">
+          {prd.grillDone ? '✅ Grill Me 통과' : '✏️ 작성/검증 중'}
+        </span>
+        <PillButton active={open} onClick={() => setOpen(!open)}>
+          📋 PRD
+        </PillButton>
+      </div>
+      {open && (
+        <div className="border-t border-gray-100 p-4">
+          <p className="whitespace-pre-wrap rounded-xl bg-gray-50 p-3 text-sm text-gray-700">
+            {prd.prdText}
+          </p>
+          {prd.questions?.length > 0 && (
+            <div className="mt-3 space-y-1">
+              <p className="text-xs font-bold text-gray-400">Grill Me 질문</p>
+              {prd.questions.map((q, i) => (
+                <p key={i} className="text-sm text-gray-600">
+                  🤔 {q}
+                </p>
+              ))}
+            </div>
+          )}
+          <FeedbackEditor
+            value={prd.aiFeedback ?? ''}
+            editedBy={prd.feedbackEditedBy}
+            onSave={async (text) => {
+              await updateDoc(doc(db, 'prds', prd.uid), {
+                aiFeedback: text,
+                feedbackEditedBy: 'instructor',
+                feedbackUpdatedAt: serverTimestamp(),
               })
             }}
           />

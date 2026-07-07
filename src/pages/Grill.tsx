@@ -24,6 +24,8 @@ export default function Grill() {
   const [passed, setPassed] = useState(false)
   const [feedback, setFeedback] = useState('')
   const [feedbackLoading, setFeedbackLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [savedJustNow, setSavedJustNow] = useState(false)
 
   // 기존에 저장된 PRD 불러오기 (강사가 피드백을 수정하면 실시간 반영)
   useEffect(() => {
@@ -51,6 +53,22 @@ export default function Grill() {
       },
       { merge: true },
     )
+  }
+
+  async function saveDraft() {
+    if (prd.trim().length < 20) {
+      setError('PRD를 조금 더 작성해 주세요 (20자 이상).')
+      return
+    }
+    setError('')
+    setSaving(true)
+    try {
+      await savePrd({ prdText: prd, createdAt: serverTimestamp() })
+      setSavedJustNow(true)
+      setTimeout(() => setSavedJustNow(false), 2000)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function grill() {
@@ -143,13 +161,22 @@ export default function Grill() {
           onChange={(e) => setPrd(e.target.value)}
         />
         {error && <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-red-600">{error}</p>}
-        <button
-          onClick={grill}
-          disabled={loading}
-          className="mt-3 w-full rounded-xl bg-cinema-500 py-4 text-lg font-bold text-white transition hover:bg-cinema-600 disabled:opacity-50"
-        >
-          {loading ? '🔥 굽는 중… (최대 10초)' : questions.length > 0 ? '🔄 다시 구워보기 (선택)' : '🔥 내 PRD 구워줘!'}
-        </button>
+        <div className="mt-3 flex gap-2">
+          <button
+            onClick={saveDraft}
+            disabled={saving}
+            className="rounded-xl border-2 border-cinema-200 px-5 py-4 font-bold text-cinema-700 transition hover:bg-cinema-50 disabled:opacity-50"
+          >
+            {saving ? '저장 중…' : savedJustNow ? '✅ 저장됨' : '💾 PRD 저장'}
+          </button>
+          <button
+            onClick={grill}
+            disabled={loading}
+            className="flex-1 rounded-xl bg-cinema-500 py-4 text-lg font-bold text-white transition hover:bg-cinema-600 disabled:opacity-50"
+          >
+            {loading ? '🔥 굽는 중… (최대 10초)' : questions.length > 0 ? '🔄 다시 구워보기 (선택)' : '🔥 내 PRD 구워줘!'}
+          </button>
+        </div>
       </div>
 
       {questions.length > 0 && (
