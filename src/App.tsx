@@ -13,6 +13,8 @@ import Present from './pages/Present'
 import Guide from './pages/Guide'
 import Instructor from './pages/Instructor'
 import Certificate from './pages/Certificate'
+import Terms from './pages/Terms'
+import Privacy from './pages/Privacy'
 
 export default function App() {
   const { session, loading } = useAuth()
@@ -47,6 +49,8 @@ export default function App() {
           <Route path="/guide" element={<Guide />} />
           <Route path="/instructor" element={<Instructor />} />
           <Route path="/certificate" element={<Certificate />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Route>
       </Routes>
     </>

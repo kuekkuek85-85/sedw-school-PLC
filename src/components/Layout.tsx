@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import SignalButtons from './SignalButtons'
 import StageRibbon from './StageRibbon'
@@ -68,7 +68,16 @@ export default function Layout() {
         <Outlet />
       </main>
       <footer className="border-t border-cinema-100 py-6 text-center text-sm text-gray-400">
-        서울다원학교 어울림시네마 교원학습공동체 연수 · 2026. 7. 8.
+        <p>서울다원학교 어울림시네마 교원학습공동체 연수 · 2026. 7. 8.</p>
+        <p className="mt-2 flex items-center justify-center gap-3">
+          <Link to="/terms" className="hover:text-cinema-600 hover:underline">
+            이용약관
+          </Link>
+          <span className="text-gray-300">·</span>
+          <Link to="/privacy" className="hover:text-cinema-600 hover:underline">
+            개인정보처리방침
+          </Link>
+        </p>
       </footer>
     </div>
   )
