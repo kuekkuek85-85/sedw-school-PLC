@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   collection,
@@ -39,6 +39,8 @@ export default function Instructor() {
   const [trainingEnded, setTrainingEnded] = useState(false)
   const [previewSub, setPreviewSub] = useState<Submission | null>(null)
   const [deckSession, setDeckSession] = useState<SessionName | null>(null)
+  const [redPopups, setRedPopups] = useState<{ key: string; nickname: string }[]>([])
+  const seenRedKeys = useRef(new Set<string>())
 
   useEffect(() => {
     const unsubs = [
@@ -55,9 +57,20 @@ export default function Instructor() {
       onSnapshot(collection(db, 'prds'), (snap) =>
         setPrds(snap.docs.map((d) => d.data() as Prd)),
       ),
-      onSnapshot(collection(db, 'signals'), (snap) =>
-        setSignals(snap.docs.map((d) => ({ ...d.data() }) as Signal)),
-      ),
+      onSnapshot(collection(db, 'signals'), (snap) => {
+        setSignals(snap.docs.map((d) => ({ ...d.data() }) as Signal))
+        // 새로 🔴로 바뀐 신호는 팝업으로 즉시 알림
+        snap.docChanges().forEach((change) => {
+          if (change.type === 'removed') return
+          const data = change.doc.data() as Signal
+          if (data.status !== 'red') return
+          const ts = data.updatedAt?.toMillis?.() ?? Date.now()
+          const key = `${change.doc.id}_${ts}`
+          if (seenRedKeys.current.has(key)) return
+          seenRedKeys.current.add(key)
+          setRedPopups((prev) => [...prev, { key, nickname: data.nickname }])
+        })
+      }),
       onSnapshot(doc(db, 'config', 'app'), (snap) => {
         const data = snap.data() as
           | { activeStage?: string | null; trainingEnded?: boolean }
@@ -68,6 +81,10 @@ export default function Instructor() {
     ]
     return () => unsubs.forEach((u) => u())
   }, [])
+
+  function dismissPopup(key: string) {
+    setRedPopups((prev) => prev.filter((p) => p.key !== key))
+  }
 
   async function broadcastStage(stageId: string | null) {
     await setDoc(
@@ -108,6 +125,30 @@ export default function Instructor() {
 
   return (
     <div className="space-y-8">
+      {/* 🔴 도움 요청 팝업 — 새 신호가 오면 즉시 뜨고, 강사가 확인을 눌러야 사라짐 */}
+      {redPopups.length > 0 && (
+        <div className="fixed right-4 top-4 z-[300] flex w-full max-w-sm flex-col gap-3">
+          {redPopups.map((p) => (
+            <div
+              key={p.key}
+              className="flex items-center gap-3 rounded-2xl border-2 border-red-500 bg-white p-4 shadow-2xl animate-pulse"
+            >
+              <span className="text-3xl">🔴</span>
+              <div className="flex-1">
+                <p className="font-bold text-red-700">{p.nickname} 님이 도움을 요청했어요!</p>
+                <p className="text-sm text-gray-500">신호등 스트림에서도 확인할 수 있어요.</p>
+              </div>
+              <button
+                onClick={() => dismissPopup(p.key)}
+                className="rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white hover:bg-red-700"
+              >
+                확인
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-bold text-cinema-900">🎛️ 강사 대시보드</h1>
         <div className="flex flex-wrap gap-2">
