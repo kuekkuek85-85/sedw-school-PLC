@@ -11,10 +11,11 @@ service cloud.firestore {
         get(/databases/$(database)/documents/participants/$(request.auth.uid)).data.role == 'instructor';
     }
 
-    // 참가자: 본인 문서만 쓰기 (완료 스탬프도 본인이 arrayUnion)
+    // 참가자: 본인 문서만 쓰기 (완료 스탬프도 본인이 arrayUnion). 삭제는 강사도 가능(데이터 초기화용)
     match /participants/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
+      allow delete: if isInstructor();
     }
 
     // 포털 카드: 읽기는 전체, 쓰기는 강사만
@@ -23,45 +24,49 @@ service cloud.firestore {
       allow write: if isInstructor();
     }
 
-    // 제출물: 본인 것만 생성·삭제. 수정은 본인 또는 강사(피드백 편집)
+    // 제출물: 본인 것만 생성. 수정·삭제는 본인 또는 강사(피드백 편집·초기화)
     match /submissions/{id} {
       allow read: if signedIn();
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow update: if signedIn() && (resource.data.uid == request.auth.uid || isInstructor());
-      allow delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isInstructor());
 
-      // 댓글: 본인 것만 수정·삭제
+      // 댓글: 본인 것 또는 강사(초기화) 수정·삭제
       match /comments/{cid} {
         allow read: if signedIn();
         allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
-        allow update, delete: if signedIn() && resource.data.uid == request.auth.uid;
+        allow update, delete: if signedIn() && (resource.data.uid == request.auth.uid || isInstructor());
       }
     }
 
-    // PRD (Grill Me에서 자동 저장): 본인 것만 생성. 수정은 본인 또는 강사(피드백 편집)
+    // PRD (Grill Me에서 자동 저장): 본인 것만 생성. 수정·삭제는 본인 또는 강사
     match /prds/{uid} {
       allow read: if signedIn();
       allow create: if signedIn() && request.auth.uid == uid;
       allow update: if signedIn() && (request.auth.uid == uid || isInstructor());
+      allow delete: if isInstructor();
     }
 
-    // 이모지 반응: 문서 ID가 {submissionId}_{uid} — 본인 uid로 끝나는 것만
+    // 이모지 반응: 문서 ID가 {submissionId}_{uid} — 본인 uid로 끝나는 것만. 삭제는 강사도 가능
     match /reactions/{rid} {
       allow read: if signedIn();
       allow write: if signedIn() && rid.matches('.*_' + request.auth.uid + '$')
         && (request.resource == null || request.resource.data.uid == request.auth.uid);
+      allow delete: if isInstructor();
     }
 
-    // 신호등: 본인 문서만
+    // 신호등: 본인 문서만. 삭제는 강사도 가능(초기화)
     match /signals/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
+      allow delete: if isInstructor();
     }
 
-    // 연수 성찰 후기: 본인 것만 쓰기, 전체 읽기 가능
+    // 연수 성찰 후기: 본인 것만 쓰기, 전체 읽기 가능. 삭제는 강사도 가능(초기화)
     match /reflections/{uid} {
       allow read: if signedIn();
       allow write: if signedIn() && request.auth.uid == uid;
+      allow delete: if isInstructor();
     }
 
     // 설정(스테이지 방송, 연수 종료 등): 읽기 전체, 쓰기 강사만

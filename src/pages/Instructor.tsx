@@ -17,6 +17,7 @@ import { trackBadge } from '../lib/constants'
 import { SESSIONS, stagesBySession, type SessionName } from '../data/stages'
 import SlideViewerModal from '../components/SlideViewerModal'
 import StageDeckModal from '../components/StageDeckModal'
+import ResetDataModal from '../components/ResetDataModal'
 import type { Submission, Signal, Prd } from '../lib/types'
 
 interface Participant {
@@ -41,6 +42,7 @@ export default function Instructor() {
   const [deckSession, setDeckSession] = useState<SessionName | null>(null)
   const [redPopups, setRedPopups] = useState<{ key: string; nickname: string }[]>([])
   const seenRedKeys = useRef(new Set<string>())
+  const [showReset, setShowReset] = useState(false)
 
   useEffect(() => {
     const unsubs = [
@@ -127,7 +129,7 @@ export default function Instructor() {
     <div className="space-y-8">
       {/* 🔴 도움 요청 팝업 — 새 신호가 오면 즉시 뜨고, 강사가 확인을 눌러야 사라짐 */}
       {redPopups.length > 0 && (
-        <div className="fixed right-4 top-4 z-[300] flex w-full max-w-sm flex-col gap-3">
+        <div className="fixed bottom-4 right-4 z-[300] flex w-full max-w-sm flex-col-reverse gap-3">
           {redPopups.map((p) => (
             <div
               key={p.key}
@@ -170,6 +172,12 @@ export default function Instructor() {
               🏁 연수 종료됨
             </span>
           )}
+          <button
+            onClick={() => setShowReset(true)}
+            className="rounded-xl border-2 border-red-200 px-5 py-3 font-bold text-red-600 transition hover:bg-red-50"
+          >
+            🗑️ 데이터 초기화
+          </button>
         </div>
       </div>
 
@@ -309,6 +317,7 @@ export default function Instructor() {
       {deckSession && (
         <StageDeckModal session={deckSession} onClose={() => setDeckSession(null)} />
       )}
+      {showReset && <ResetDataModal onClose={() => setShowReset(false)} />}
     </div>
   )
 }
